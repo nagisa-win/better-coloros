@@ -80,21 +80,18 @@ fun FeatureTile(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        SuggestionChip(
-                            onClick = {},
-                            label = {
-                                Text(
-                                    text = badgeText,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            },
-                            colors = SuggestionChipDefaults.suggestionChipColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            border = null,
-                            modifier = Modifier.height(24.dp)
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+                        ) {
+                            Text(
+                                text = badgeText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                maxLines = 1,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(2.dp))

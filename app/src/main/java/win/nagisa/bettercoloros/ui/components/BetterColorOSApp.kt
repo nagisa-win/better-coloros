@@ -100,6 +100,7 @@ fun BetterColorOSApp(
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             title = {
                 Text(
                     text = "关于 Better ColorOS",

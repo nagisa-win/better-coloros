@@ -98,6 +98,7 @@ fun SettingsCard(modifier: Modifier = Modifier) {
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             title = {
                 Text(
                     text = stringResource(R.string.dialog_hide_icon_title),
