@@ -11,8 +11,6 @@ import android.provider.MediaStore
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -103,7 +101,7 @@ object PhotoDataExtractor {
                         }
                     }
                 })
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
 
             XposedBridge.log("$TAG Hooked PhotoPager methods")
         } catch (t: Throwable) {
@@ -121,18 +119,18 @@ object PhotoDataExtractor {
             var anchorView: View? = null
             try {
                 anchorView = XposedHelpers.callMethod(window, "getAnchorView") as? View
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
             if (anchorView == null) {
                 try {
                     anchorView = XposedHelpers.getObjectField(window, "mAnchorView") as? View
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
             }
 
             var context: Context? = anchorView?.context
             if (context == null) {
                 try {
                     context = XposedHelpers.getObjectField(window, "mContext") as? Context
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
             }
             if (context == null) {
                 context = sCurrentActivity?.get()
@@ -164,7 +162,7 @@ object PhotoDataExtractor {
                 try {
                     position = XposedHelpers.callMethod(photoPager, "getCurrentSelection") as Int
                     sCurrentSelection = position
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
             }
 
             XposedBridge.log("$TAG Active position: $position")
@@ -184,27 +182,36 @@ object PhotoDataExtractor {
                 XposedBridge.log("$TAG Extracted from dud: path=$filePath, mediaId=$mediaId")
             }
 
-            // Fallback 1: PhotoFragment arguments
-            if ((filePath.isNullOrEmpty()) && mediaId <= 0 && activity is FragmentActivity) {
-                val fragments: List<Fragment> = activity.supportFragmentManager.fragments
-                for (fragment in fragments) {
-                    if (fragment.javaClass.name.contains("PhotoFragment")) {
-                        val args: Bundle? = fragment.arguments
-                        if (args != null) {
-                            val mediaItemPath = args.getString("media-item-path")
-                            XposedBridge.log("$TAG Found media-item-path in PhotoFragment args: $mediaItemPath")
-                            if (mediaItemPath != null && mediaItemPath.contains("/image/")) {
-                                try {
-                                    val idStr = mediaItemPath.substring(mediaItemPath.lastIndexOf('/') + 1)
-                                    val parsedId = idStr.toLong()
-                                    if (parsedId > 0) {
-                                        mediaId = parsedId
+            // Fallback 1: PhotoFragment arguments (via reflection to avoid compile/runtime classloader dependencies)
+            if ((filePath.isNullOrEmpty()) && mediaId <= 0 && activity != null) {
+                try {
+                    val supportFragmentManager = activity.javaClass.getMethod("getSupportFragmentManager").invoke(activity)
+                    if (supportFragmentManager != null) {
+                        val fragments = supportFragmentManager.javaClass.getMethod("getFragments").invoke(supportFragmentManager) as? List<*>
+                        if (fragments != null) {
+                            for (fragment in fragments) {
+                                if (fragment != null && fragment.javaClass.name.contains("PhotoFragment")) {
+                                    val args = fragment.javaClass.getMethod("getArguments").invoke(fragment) as? Bundle
+                                    if (args != null) {
+                                        val mediaItemPath = args.getString("media-item-path")
+                                        XposedBridge.log("$TAG Found media-item-path in PhotoFragment args: $mediaItemPath")
+                                        if (mediaItemPath != null && mediaItemPath.contains("/image/")) {
+                                            try {
+                                                val idStr = mediaItemPath.substring(mediaItemPath.lastIndexOf('/') + 1)
+                                                val parsedId = idStr.toLong()
+                                                if (parsedId > 0) {
+                                                    mediaId = parsedId
+                                                }
+                                            } catch (e: Throwable) {}
+                                        }
                                     }
-                                } catch (_: Throwable) {}
+                                    break
+                                }
                             }
                         }
-                        break
                     }
+                } catch (t: Throwable) {
+                    XposedBridge.log("$TAG Extract from PhotoFragment failed: $t")
                 }
             }
 
@@ -279,7 +286,7 @@ object PhotoDataExtractor {
             if (res is String && (res.startsWith("/") || res.startsWith("content://"))) {
                 return res
             }
-        } catch (_: Throwable) {}
+        } catch (e: Throwable) {}
 
         try {
             val f: Field = dud.javaClass.getField("o")
@@ -287,7 +294,7 @@ object PhotoDataExtractor {
             if (res is String && (res.startsWith("/") || res.startsWith("content://"))) {
                 return res
             }
-        } catch (_: Throwable) {}
+        } catch (e: Throwable) {}
 
         var clz: Class<*>? = dud.javaClass
         while (clz != null && clz != Any::class.java) {
@@ -299,7 +306,7 @@ object PhotoDataExtractor {
                         if (value != null && (value.startsWith("/storage/") || value.startsWith("/sdcard/"))) {
                             return value
                         }
-                    } catch (_: Throwable) {}
+                    } catch (e: Throwable) {}
                 }
             }
             clz = clz.superclass
@@ -316,7 +323,7 @@ object PhotoDataExtractor {
             if (res is Number && res.toLong() > 0) {
                 return res.toLong()
             }
-        } catch (_: Throwable) {}
+        } catch (e: Throwable) {}
 
         var clz: Class<*>? = dud.javaClass
         while (clz != null && clz != Any::class.java) {
@@ -328,7 +335,7 @@ object PhotoDataExtractor {
                         if (value > 1000) {
                             return value
                         }
-                    } catch (_: Throwable) {}
+                    } catch (e: Throwable) {}
                 }
             }
             clz = clz.superclass

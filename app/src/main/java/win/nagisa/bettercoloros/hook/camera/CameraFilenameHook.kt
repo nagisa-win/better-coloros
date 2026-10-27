@@ -56,7 +56,7 @@ object CameraFilenameHook : BaseHook() {
                             if (methodInstance.returnType == String::class.java) {
                                 candidateMethods.add(methodInstance)
                             }
-                        } catch (_: Throwable) {}
+                        } catch (e: Throwable) {}
                     }
                 } catch (t: Throwable) {
                     XposedBridge.log("$TAG DexKit findMethod error for '$str': ${t.message}")
@@ -77,7 +77,7 @@ object CameraFilenameHook : BaseHook() {
                             }
                         }
                     })
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
             }
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Error during DexKit dynamic hooking: ${t.message}")
@@ -260,7 +260,7 @@ object CameraFilenameHook : BaseHook() {
                         }
                     }
                 )
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
 
             try {
                 XposedHelpers.findAndHookMethod(
@@ -281,7 +281,7 @@ object CameraFilenameHook : BaseHook() {
                         }
                     }
                 )
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook MediaRecorder: ${t.message}")
         }
@@ -356,7 +356,7 @@ object CameraFilenameHook : BaseHook() {
                         }
                     }
                 )
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook SimpleDateFormat/Resources: ${t.message}")
         }

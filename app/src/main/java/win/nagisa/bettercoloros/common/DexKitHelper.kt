@@ -37,7 +37,7 @@ object DexKitHelper {
     fun close() {
         try {
             bridgeInstance?.close()
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
         } finally {
             bridgeInstance = null
         }

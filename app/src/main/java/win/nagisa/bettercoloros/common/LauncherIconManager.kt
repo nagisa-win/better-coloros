@@ -21,7 +21,7 @@ object LauncherIconManager {
             val component = ComponentName(context, ALIAS_CLASS)
             val state = context.packageManager.getComponentEnabledSetting(component)
             state != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
             true
         }
     }
