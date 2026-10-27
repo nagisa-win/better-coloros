@@ -29,6 +29,13 @@ class FilenameNormalizerTest {
     }
 
     @Test
+    fun testMotionPhotoNormalization() {
+        val input = "MOD20261027171025.mp4"
+        assertTrue(FilenameNormalizer.needNormalize(input))
+        assertEquals("MOD_20261027_171025.mp4", FilenameNormalizer.normalize(input))
+    }
+
+    @Test
     fun testBurstAndCoverSuffixPreserved() {
         assertEquals(
             "IMG_20261027_171025_BURST01.jpg",

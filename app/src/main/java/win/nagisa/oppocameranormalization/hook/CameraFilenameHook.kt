@@ -385,7 +385,29 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            XposedBridge.log("$TAG Hooked SimpleDateFormat constructors successfully.")
+            // 拦截 Resources.getText(int) 与 Resources.getString(int)
+            val resClass = android.content.res.Resources::class.java
+            try {
+                XposedHelpers.findAndHookMethod(
+                    resClass,
+                    "getText",
+                    Int::class.javaPrimitiveType,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            val text = param.result as? CharSequence ?: return
+                            val str = text.toString()
+                            val adapted = adaptPattern(str)
+                            if (adapted != str) {
+                                param.result = adapted
+                                XposedBridge.log("$TAG [Resources.getText]: '$text' -> '$adapted'")
+                            }
+                        }
+                    }
+                )
+            } catch (_: Throwable) {
+            }
+
+            XposedBridge.log("$TAG Hooked SimpleDateFormat constructors and Resources successfully.")
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook SimpleDateFormat: ${t.message}")
         }
@@ -396,8 +418,10 @@ object CameraFilenameHook : BaseHook() {
             "yyyyMMddHHmmss" -> "yyyyMMdd_HHmmss"
             "'IMG'yyyyMMddHHmmss" -> "'IMG_'yyyyMMdd'_'HHmmss"
             "'VID'yyyyMMddHHmmss" -> "'VID_'yyyyMMdd'_'HHmmss"
+            "'MOD'yyyyMMddHHmmss" -> "'MOD_'yyyyMMdd'_'HHmmss"
             "IMGyyyyMMddHHmmss" -> "IMG_yyyyMMdd_HHmmss"
             "VIDyyyyMMddHHmmss" -> "VID_yyyyMMdd_HHmmss"
+            "MODyyyyMMddHHmmss" -> "MOD_yyyyMMdd_HHmmss"
             else -> pattern
         }
     }

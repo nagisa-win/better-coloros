@@ -21,16 +21,19 @@ object FilenameNormalizer {
     // 匹配视频前缀与时间戳：可选路径 + VID + 可选_ + 8位年月日 + 可选_ + 6位时分秒 + 后续内容
     private val VIDEO_REGEX = Regex("""^(.*?)VID_?(\d{4})(\d{2})(\d{2})_?(\d{2})(\d{2})(\d{2})(.*)$""")
 
+    // 匹配动态/电影前缀与时间戳：可选路径 + MOD + 可选_ + 8位年月日 + 可选_ + 6位时分秒 + 后续内容
+    private val MOD_REGEX = Regex("""^(.*?)MOD_?(\d{4})(\d{2})(\d{2})_?(\d{2})(\d{2})(\d{2})(.*)$""")
+
     /**
      * 判断字符串中是否包含需要被规范化的文件名
      */
     fun needNormalize(input: String?): Boolean {
         if (input.isNullOrEmpty()) return false
-        // 已经是标准的 IMG_YYYYMMDD_HHmmss 或 VID_YYYYMMDD_HHmmss 则无需处理
-        if (input.contains(Regex("""(IMG|VID)_\d{8}_\d{6}"""))) {
+        // 已经是标准的 IMG_YYYYMMDD_HHmmss 或 VID_YYYYMMDD_HHmmss 或 MOD_YYYYMMDD_HHmmss 则无需处理
+        if (input.contains(Regex("""(IMG|VID|MOD)_\d{8}_\d{6}"""))) {
             return false
         }
-        return PHOTO_REGEX.matches(input) || VIDEO_REGEX.matches(input)
+        return PHOTO_REGEX.matches(input) || VIDEO_REGEX.matches(input) || MOD_REGEX.matches(input)
     }
 
     /**
@@ -40,7 +43,7 @@ object FilenameNormalizer {
         if (input.isNullOrEmpty()) return input
 
         // 幂等性检查：已经是标准格式，直接原样返回
-        if (input.contains(Regex("""(IMG|VID)_\d{8}_\d{6}"""))) {
+        if (input.contains(Regex("""(IMG|VID|MOD)_\d{8}_\d{6}"""))) {
             return input
         }
 
@@ -68,6 +71,19 @@ object FilenameNormalizer {
             val sec = match.groupValues[7]
             val suffix = match.groupValues[8]
             return "${prefix}VID_${year}${month}${day}_${hour}${min}${sec}${suffix}"
+        }
+
+        // 处理动作/电影模式
+        MOD_REGEX.matchEntire(input)?.let { match ->
+            val prefix = match.groupValues[1]
+            val year = match.groupValues[2]
+            val month = match.groupValues[3]
+            val day = match.groupValues[4]
+            val hour = match.groupValues[5]
+            val min = match.groupValues[6]
+            val sec = match.groupValues[7]
+            val suffix = match.groupValues[8]
+            return "${prefix}MOD_${year}${month}${day}_${hour}${min}${sec}${suffix}"
         }
 
         return input
