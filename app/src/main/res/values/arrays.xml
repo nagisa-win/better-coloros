@@ -3,6 +3,6 @@
     <string-array name="xposed_scope">
         <item>com.oplus.camera</item>
         <item>com.coloros.gallery3d</item>
-        <item>win.nagisa.oppocameranormalization</item>
+        <item>win.nagisa.bettercoloros</item>
     </string-array>
 </resources>

@@ -1,10 +1,10 @@
-package win.nagisa.oppocameranormalization
+package win.nagisa.bettercoloros
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import win.nagisa.oppocameranormalization.util.FilenameNormalizer
+import win.nagisa.bettercoloros.common.FilenameNormalizer
 
 class FilenameNormalizerTest {
 
@@ -74,7 +74,6 @@ class FilenameNormalizerTest {
 
     @Test
     fun testPartialUnderscoreFixed() {
-        // 部分下划线情况也应纠正为完整双下划线
         assertEquals("IMG_20261027_171025.jpg", FilenameNormalizer.normalize("IMG_20261027171025.jpg"))
         assertEquals("IMG_20261027_171025.jpg", FilenameNormalizer.normalize("IMG20261027_171025.jpg"))
     }

@@ -1,120 +1,83 @@
-# OPPO 相机文件名规范化 (oppo-camera-normalization)
+# Better ColorOS 体验增强工具箱
 
-[![Build & Release Android APK](https://github.com/nagisa-win/oppo-camera-normalization/actions/workflows/build-release.yml/badge.svg)](https://github.com/nagisa-win/oppo-camera-normalization/actions/workflows/build-release.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/nagisa-win/oppo-camera-normalization?color=blue&logo=github)](https://github.com/nagisa-win/oppo-camera-normalization/releases)
+[![Build & Release Android APK](https://github.com/nagisa-win/better-coloros/actions/workflows/build-release.yml/badge.svg)](https://github.com/nagisa-win/better-coloros/actions/workflows/build-release.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/nagisa-win/better-coloros?color=blue&logo=github)](https://github.com/nagisa-win/better-coloros/releases)
 [![License](https://img.shields.io/badge/License-GPL%20v3-green.svg)](LICENSE)
 
-专为 **OPPO / 一加 (ColorOS)** 用户打造的 **LSPosed (Zygisk)** Xposed 模块。  
-用于将原生相机拍摄的照片与视频从缺少下划线的非标准命名（如 `IMG20261027171025.jpg` / `VID20261027171025.mp4`）**自动规范化为带下划线的 Android 行业标准格式**（`IMG_20261027_171025.jpg` / `VID_20261027_171025.mp4`）。
+专为 **OPPO / 一加 (ColorOS)** 用户量身打造的 **LSPosed (Zygisk)** 模块化体验优化工具箱。  
+遵循现代 **Material Design 3 (Material You)** 设计语言，融合多项深度系统级 Hook 优化，并适配直板手机、折叠屏及平板电脑。
 
 ---
 
-## 📌 痛点背景
+## ✨ 核心特性一览
 
-当前 ColorOS / OPPO 原生相机在保存照片和录像时，默认采用连贯紧凑的无下划线格式：
-- **现存命名**：`IMG20261027171025.jpg`、`VID20261027171025.mp4`
-- **行业通用标准**：`IMG_20261027_171025.jpg`、`VID_20261027_171025.mp4`（如 AOSP 原生、Google Pixel、三星、索尼等）
+### 1. 📷 相机文件名规范化 (Camera Filename Normalization)
+- **解决痛点**：ColorOS 原生相机拍摄的照片与视频默认采用紧凑命名（`IMGYYYYMMDDHHmmss.ext`），缺少下划线分割，导致各大网盘、群晖 NAS、Immich 等工具通过正则自动按拍摄日期归档时频频解析失败。
+- **规范转换**：
+  - 标准拍照：`IMG20261027171025.jpg` ➔ **`IMG_20261027_171025.jpg`**
+  - 高效/专业：`.heic` 与 `.dng` 格式自动规范化
+  - 动态/电影：`MOD20261027171025.mp4` ➔ **`MOD_20261027_171025.mp4`**
+  - 连拍与实况：保留 `_BURST01`、`_COVER` 等全部业务后缀
+- **纵深防御**：采用 DexKit 动态扫描 + MediaStore 媒体库 + File I/O + MediaRecorder 五层拦截，兼具强鲁棒性与幂等性。
 
-这种格式差异导致大量第三方照片整理工具、NAS 同步应用（如群晖 Synology Photos、Nextcloud、Immich）以及百度网盘/阿里网盘在通过正则表达式按年月日时分秒解析归档照片时无法正确识别时间戳。
+### 2. 🖼️ 系统相册复制到剪贴板 (Gallery Copy to Clipboard)
+- **解决痛点**：系统自带相册浏览照片时，右上角三个点「更多」菜单缺少复制选项，无法像 iOS 或电脑一样直接复制图片进行跨端粘贴。
+- **无缝注入**：在右上角 COUI 标准菜单中注入「复制到剪贴板」项。
+- **跨端生产力**：使用原生 MediaStore Content URI，无二次压缩损失，完整保留 EXIF 与 HDR 数据。配合 **KDE Connect**、**LocalSend** 或微信/QQ，手机端点击复制，电脑端直接 **Ctrl+V / ⌘+V** 即可瞬间粘贴原图！
 
-**本模块通过在底层拦截相机文件生成逻辑，从根源上将照片与视频存储为标准带下划线格式。**
+### 3. 🎨 现代 Material You 界面与多端自适应
+- **动态取色 (Monet Engine)**：自动拾取手机壁纸主色与强调色，完美适配系统亮色与暗色模式。
+- **响应式豆腐块布局 (Responsive Tiles)**：
+  - **手机直板端**：精细的单列流式卡片，优雅直观；
+  - **折叠屏展开态 / 平板端**：自动切换为**双列并排豆腐块网格布局**，并限制最大宽度居中排版，大屏体验舒适协调。
+- **内置即时转换测试器**：可在卡片中任意输入测试文件名，毫秒级实时预览规范化结果。
 
----
-
-## 🌟 核心特性与命名对照
-
-### 1. 完整覆盖各类照片与视频格式
-| 媒体类型 | 原始非标准命名 | 模块规范化后标准命名 |
-| :--- | :--- | :--- |
-| **标准拍照 (JPEG)** | `IMG20261027171025.jpg` | `IMG_20261027_171025.jpg` |
-| **高效率格式 (HEIC)** | `IMG20261027171025.heic` | `IMG_20261027_171025.heic` |
-| **专业模式 (RAW/DNG)** | `IMG20261027171025.dng` | `IMG_20261027_171025.dng` |
-| **连拍照片 (Burst)** | `IMG20261027171025_BURST01.jpg` | `IMG_20261027_171025_BURST01.jpg` |
-| **实况照片封面 (Cover)** | `IMG20261027171025_COVER.jpg` | `IMG_20261027_171025_COVER.jpg` |
-| **普通录像 (MP4)** | `VID20261027171025.mp4` | `VID_20261027_171025.mp4` |
-| **慢动作视频 (Slow-mo)** | `VID20261027171025_SLOW.mp4` | `VID_20261027_171025_SLOW.mp4` |
-
-### 2. 五层纵深防御拦截架构
-参考 [OPCameraPro](https://github.com/Weverses/OPCameraPro) 的现代注入理念，构建多层拦截保障：
-1. **DexKit 动态特征扫描**：利用 DexKit 动态扫描 `com.oplus.camera` 内部与 `yyyyMMddHHmmss`、`IMG`、`VID` 相关的核心私有/混淆方法，直接在调用源头进行返回值重写。
-2. **ContentValues 字段拦截**：拦截存入系统 MediaStore 的 `_display_name`、`title`、`_data` 等字段，确保系统相册数据库完全一致。
-3. **ContentResolver 插入兜底**：拦截 `ContentResolver.insert()` 与 `update()` 操作，防止部分异步存储逻辑漏拦截。
-4. **底层 File 与 FileOutputStream 拦截**：在 Java I/O 层拦截 `new File(...)` 与输出流构造，确保存储介质上物理落盘的文件名也是标准的带下划线格式。
-5. **MediaRecorder 视频路径拦截**：拦截系统录像模块 `MediaRecorder.setOutputFile()`，确保拍摄的 MP4 视频路径规范。
-
-### 3. 高稳定性与安全性
-- **严格幂等性**：已经是标准带下划线命名的文件自动跳过，绝无二次重复添加下划线的问题。
-- **零耗电、零性能开销**：仅在按下快门和生成文件的瞬间执行正则替换，不占用后台驻留资源。
-- **自带图形化控制台**：
-  - 启动器自带桌面图标，打开即可直观查看 LSPosed 模块激活状态。
-  - 内置「规则即时测试工具」，可输入任意文件名实时预览转换效果。
+### 4. 👁️ 桌面启动器图标随心显隐
+- 支持在设置中一键隐藏桌面图标，避免占用主屏幕空间。
+- 隐藏后依然完全支持从 **LSPosed 管理器** 随时重新唤起设置界面，并可随时恢复显示。
 
 ---
 
-## 📲 安装与使用指南
+## 📲 安装与启用步骤
 
 ### 前置条件
-- 已通过 **Magisk** 或 **KernelSU** / **APatch** 获取 Root 权限
-- 已安装并启用 **LSPosed** 框架（Zygisk 版推荐）
+- 已通过 **Magisk**、**KernelSU** 或 **APatch** 获得 Root 权限
+- 已安装并启用 **LSPosed**（推荐 Zygisk 模式）
 
-### 使用步骤
-1. 进入 [Releases 页面](https://github.com/nagisa-win/oppo-camera-normalization/releases) 下载最新版的 `oppo-camera-normalization-release.apk`。
-2. 安装 APK 到手机。
-3. 打开 **LSPosed 管理器**：
-   - 在模块列表中找到 **OPPO 相机文件名规范化** 并开启开关。
-   - 在模块的作用域（Scope）中勾选 **「相机」 (`com.oplus.camera`)**（以及相册 `com.coloros.gallery3d`）。
-4. 在多任务界面**强制停止相机应用**（或进入设置 -> 应用管理 -> 相机 -> 强行停止）。
-5. 重新打开相机拍摄任意一张照片或录制一段视频，前往文件管理查看，文件名已变为标准的 `IMG_YYYYMMDD_HHmmss.ext` 格式！
-
----
-
-## 🛠️ 项目结构
-
-```
-oppo-camera-normalization/
-├── .github/workflows/
-│   └── build-release.yml                 # GitHub Actions 自动化编译与 Release 流程
-├── app/
-│   ├── build.gradle.kts                  # 模块 Gradle 脚本 (配置 DexKit 与 Xposed API)
-│   ├── proguard-rules.pro
-│   ├── signing/
-│   │   └── common.jks                    # 通用签名密钥 (方便 CI 直接打出有效 APK)
-│   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml       # 声明 LSPosed 模块入口与元数据
-│       │   ├── assets/
-│       │   │   └── xposed_init           # Xposed 模块入口声明
-│       │   ├── java/win/nagisa/oppocameranormalization/
-│       │   │   ├── MainHook.kt           # Xposed 入口分发类
-│       │   │   ├── hook/
-│       │   │   │   ├── BaseHook.kt
-│       │   │   │   └── CameraFilenameHook.kt # 五层纵深防御文件名拦截核心实现
-│       │   │   ├── ui/
-│       │   │   │   └── MainActivity.kt   # 状态检测与即时测试 UI
-│       │   │   └── util/
-│       │   │       ├── DexKitHelper.kt   # DexKit 动态 DEX 扫描封装
-│       │   │       └── FilenameNormalizer.kt # 文件名规范化与正则匹配引擎
-│       │   └── res/                      # Material3 界面资源
-│       └── test/java/win/nagisa/oppocameranormalization/
-│           └── FilenameNormalizerTest.kt # 单元测试用例
-├── build.gradle.kts                      # 顶层 Gradle 构建脚本
-└── settings.gradle.kts
-```
+### 激活步骤
+1. 前往 [Releases 页面](https://github.com/nagisa-win/better-coloros/releases) 下载最新的 `better-coloros-release.apk` 并安装。
+2. 打开 **LSPosed 管理器**：
+   - 在模块列表中找到 **Better ColorOS** 并开启总开关；
+   - 确认作用域（Scope）勾选了 **「相机」 (`com.oplus.camera`)** 与 **「相册」 (`com.coloros.gallery3d`)**。
+3. 在系统多任务管理中**彻底结束相机与相册进程**（或在 Better ColorOS 主界面中点击「一键重启相机与相册」）。
+4. 重新打开相机拍照验证文件名，或打开相册点开大图查看右上角菜单中的「复制到剪贴板」！
 
 ---
 
-## 🏗️ 编译说明
+## 🤖 Harness 工程体系与 Agent 规范
 
-本项目配置了完整的 **GitHub Actions CI/CD**：
-- 每当向 `main` 分支提交代码或推送 Tag（如 `v1.0.0`）时，GitHub Actions 会自动在 Ubuntu 云端环境中运行单元测试、编译出 Debug 与 Release 两个版本的 APK，并自动发布 GitHub Release。
-- 本地无须配置 Android SDK / NDK 开发环境。
+本项目严格建立了 **Harness 工程化协作机制**，任何开发者与 AI Agent 在维护与扩展代码库时均遵循标准 SOP：
+
+- **顶层入口**：[AGENTS.md](AGENTS.md)
+- **开发前必读**：[docs/STARTUP.md](docs/STARTUP.md)（项目背景、架构分层、约束边界与共享库）
+- **UI 设计规范**：[docs/DESIGN.md](docs/DESIGN.md)（Material You、响应式断点、亮暗色适配）
+- **功能方案沉淀**：新需求必须先在 [docs/features/](docs/features/) 下编写设计文档后方可编码
+- **提交与安全审计**：[docs/COMMIT.md](docs/COMMIT.md)（规范提交、严禁敏感信息泄露）
+
+---
+
+## 🏗️ 自动化构建与 CI/CD
+
+本项目配置了完整的 GitHub Actions 工作流：
+- 代码推送到 `main` 分支或发布 Tag 时，云端自动运行单元测试、打包签名 Release 与 Debug APK，并发布 GitHub Releases。
+- 无须在本地配置复杂的 Android SDK 编译环境。
 
 ---
 
 ## 📄 开源许可证
 
-本项目基于 [GNU General Public License v3.0](LICENSE) 协议开源。
+本项目基于 [GNU General Public License v3.0](LICENSE) 开源。
 致敬与感谢：
-- [OPCameraPro](https://github.com/Weverses/OPCameraPro) - 注入点思路与 DexKit 实践参考
-- [DexKit](https://github.com/LuckyPray/DexKit) - 强大的运行时 DEX 动态扫描工具
-- [EzXHelper](https://github.com/KyuubiRan/EzXHelper) - 优雅的 Xposed 开发框架
+- [OPCameraPro](https://github.com/Weverses/OPCameraPro) - 注入思路与底层 DexKit 实践参考
+- [coloros-gallery-copy](https://github.com/nagisa-win/coloros-gallery-copy) - 相册复制方案来源
+- [DexKit](https://github.com/LuckyPray/DexKit) & [EzXHelper](https://github.com/KyuubiRan/EzXHelper)

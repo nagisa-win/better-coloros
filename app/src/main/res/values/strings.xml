@@ -1,10 +1,29 @@
 <resources>
-    <string name="app_name">OPPO 相机文件名规范化</string>
-    <string name="xposeddescription">将 OPPO/一加 相机拍摄的照片与视频文件名（IMGYYYYMMDDHHmmss / VIDYYYYMMDDHHmmss）自动重命名为带下划线的标准格式（IMG_YYYYMMDD_HHmmss / VID_YYYYMMDD_HHmmss）。</string>
-    <string name="module_status_active">LSPosed 模块已激活并运行中</string>
-    <string name="module_status_inactive">模块未激活，请在 LSPosed 管理器中启用并勾选「相机」</string>
-    <string name="desc_title">功能说明</string>
-    <string name="desc_detail">ColorOS / OPPO 原生相机在保存照片和视频时，默认命名缺少下划线分割（如 IMG20261027171025.jpg）。本模块通过在底层拦截并规范化文件名，使其统一符合 Android 标准命名格式（IMG_20261027_171025.jpg / VID_20261027_171025.mp4），完美适配各类网盘自动归档与第三方相册整理工具。</string>
-    <string name="test_title">规则即时测试</string>
-    <string name="test_hint">输入原文件名测试，如 IMG20261027171025.jpg</string>
+    <string name="app_name">Better ColorOS</string>
+    <string name="xposeddescription">专为 ColorOS 打造的体验优化工具箱：包含相机照片/视频带下划线标准命名、系统相册更多菜单新增「复制到剪贴板」等实用功能。</string>
+
+    <string name="module_active">LSPosed 模块已激活</string>
+    <string name="module_inactive">模块未激活，请在 LSPosed 管理器中启用</string>
+    <string name="scope_summary">生效作用域：相机 (com.oplus.camera) 与 相册 (com.coloros.gallery3d)</string>
+
+    <!-- Camera Rename Feature -->
+    <string name="feature_camera_title">相机文件名规范化</string>
+    <string name="feature_camera_subtitle">自动将拍摄的照片与视频命名规范化为 Android 行业标准带下划线格式</string>
+    <string name="feature_camera_badge">默认开启</string>
+
+    <!-- Gallery Copy Feature -->
+    <string name="feature_gallery_title">相册复制到剪贴板</string>
+    <string name="feature_gallery_subtitle">在系统相册右上角「更多」菜单注入「复制到剪贴板」，无损快速复制图片</string>
+    <string name="feature_gallery_badge">默认开启</string>
+
+    <!-- Settings -->
+    <string name="settings_title">设置与工具</string>
+    <string name="setting_hide_icon">隐藏桌面启动器图标</string>
+    <string name="setting_hide_icon_desc">隐藏后应用图标将不再占用桌面空间，可随时通过 LSPosed 模块管理器重新打开</string>
+    <string name="dialog_hide_icon_title">确认隐藏桌面图标？</string>
+    <string name="dialog_hide_icon_message">隐藏桌面图标后，Better ColorOS 图标将从手机主屏幕消失。\n\n你随时可以打开「LSPosed 管理器 -> 模块 -> Better ColorOS」再次打开本设置界面。\n\n确定要隐藏吗？</string>
+    <string name="action_confirm">确定隐藏</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_restart_targets">一键重启相机与相册</string>
+    <string name="action_restart_targets_desc">修改配置或刚激活模块后，强制结束目标进程以便 Hook 立即生效</string>
 </resources>

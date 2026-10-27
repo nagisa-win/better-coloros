@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 }
 
 include(":app")
-rootProject.name = "oppo-camera-normalization"
+rootProject.name = "better-coloros"
