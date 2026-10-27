@@ -17,13 +17,20 @@ class MainActivity : ComponentActivity() {
         fun isModuleActive(): Boolean = false
     }
 
+    /**
+     * 实例方法同样作为 Hook 目标，双重保障
+     */
+    fun isModuleActivated(): Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val active = isModuleActive() || isModuleActivated() || Companion.isModuleActive()
+
         setContent {
             BetterColorOSTheme {
-                BetterColorOSApp(isModuleActive = isModuleActive())
+                BetterColorOSApp(isModuleActive = active)
             }
         }
     }
