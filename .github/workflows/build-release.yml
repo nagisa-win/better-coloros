@@ -58,16 +58,19 @@ jobs:
       - name: Prepare APKs
         run: |
           mkdir -p dist
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            cp app/build/outputs/apk/release/app-release.apk dist/better-coloros-release.apk
-          else
-            find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} dist/better-coloros-release.apk \;
+          VERSION_CODE=$(grep 'versionCode =' app/build.gradle.kts | head -n1 | sed -E 's/[^0-9]*([0-9]+).*/\1/')
+          echo "Detected versionCode: $VERSION_CODE"
+
+          RELEASE_APK=$(find app/build/outputs/apk/release/ -name "*.apk" | head -n1)
+          if [ -n "$RELEASE_APK" ]; then
+            cp "$RELEASE_APK" "dist/better-coloros-release.v${VERSION_CODE}.apk"
           fi
-          if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-            cp app/build/outputs/apk/debug/app-debug.apk dist/better-coloros-debug.apk
-          else
-            find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/better-coloros-debug.apk \;
+
+          DEBUG_APK=$(find app/build/outputs/apk/debug/ -name "*.apk" | head -n1)
+          if [ -n "$DEBUG_APK" ]; then
+            cp "$DEBUG_APK" "dist/better-coloros-debug.v${VERSION_CODE}.apk"
           fi
+
           echo "Generated APKs in dist/:"
           ls -la dist/
 
@@ -86,7 +89,8 @@ jobs:
             echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.create_release }}" == "true" ]]; then
             echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "tag_name=v1.0.0" >> $GITHUB_OUTPUT
+            VERSION_NAME=$(grep 'versionName =' app/build.gradle.kts | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')
+            echo "tag_name=v${VERSION_NAME}" >> $GITHUB_OUTPUT
           else
             echo "should_release=false" >> $GITHUB_OUTPUT
           fi
@@ -114,5 +118,5 @@ jobs:
             - **👁️ 桌面图标自由隐藏**：支持从设置中直接隐藏桌面图标，隐藏后依然支持随时从 LSPosed 管理器中重新打开。
 
             ### 📦 文件下载
-            - **`better-coloros-release.apk`**: 正式版安装包（已使用内置通用密钥签名，下载后可直接安装）
-            - **`better-coloros-debug.apk`**: 调试版安装包
+            - **`better-coloros-release.v*.apk`**: 正式版安装包（已使用内置通用密钥签名，文件名附带数字版本号）
+            - **`better-coloros-debug.v*.apk`**: 调试版安装包（文件名附带数字版本号）

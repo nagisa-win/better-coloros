@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import win.nagisa.bettercoloros.BuildConfig
 import win.nagisa.bettercoloros.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,7 +112,7 @@ fun BetterColorOSApp(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "版本：1.0.0 (Build 100)",
+                        text = "版本：${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
