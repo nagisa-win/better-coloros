@@ -30,14 +30,39 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         // 模块自身自检
         if (lpparam.packageName == MODULE_PACKAGE) {
-            try {
+            val replaceTrue = XC_MethodReplacement.returnConstant(true)
+
+            // 1. Hook MainActivity.isModuleActive (静态方法)
+            runCatching {
                 XposedHelpers.findAndHookMethod(
                     "$MODULE_PACKAGE.ui.MainActivity",
                     lpparam.classLoader,
                     "isModuleActive",
-                    XC_MethodReplacement.returnConstant(true)
+                    replaceTrue
                 )
-            } catch (e: Throwable) {}
+            }
+
+            // 2. Hook MainActivity$Companion.isModuleActive (Kotlin 伴生对象虚拟方法)
+            runCatching {
+                XposedHelpers.findAndHookMethod(
+                    "$MODULE_PACKAGE.ui.MainActivity\$Companion",
+                    lpparam.classLoader,
+                    "isModuleActive",
+                    replaceTrue
+                )
+            }
+
+            // 3. Hook MainActivity.isModuleActivated (实例方法)
+            runCatching {
+                XposedHelpers.findAndHookMethod(
+                    "$MODULE_PACKAGE.ui.MainActivity",
+                    lpparam.classLoader,
+                    "isModuleActivated",
+                    replaceTrue
+                )
+            }
+
+            XposedBridge.log("[$TAG] Successfully hooked module activation check in self process")
             return
         }
 

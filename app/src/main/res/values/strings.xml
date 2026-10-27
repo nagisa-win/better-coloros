@@ -4,6 +4,7 @@
 
     <string name="module_active">LSPosed 模块已激活</string>
     <string name="module_inactive">模块未激活，请在 LSPosed 管理器中启用</string>
+    <string name="module_inactive_hint">提示：若已在 LSPosed 启用并勾选相机/相册，实际功能已生效；在作用域中同时勾选「Better ColorOS」自身可消除此提示。</string>
     <string name="scope_summary">生效作用域：相机 (com.oplus.camera) 与 相册 (com.coloros.gallery3d)</string>
 
     <!-- Camera Rename Feature -->
