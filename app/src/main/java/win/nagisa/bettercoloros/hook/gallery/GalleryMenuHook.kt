@@ -56,7 +56,7 @@ object GalleryMenuHook : BaseHook() {
                         try {
                             val t = XposedHelpers.callMethod(item, "getTitle")
                             if (t != null) title = t.toString()
-                        } catch (_: Throwable) {}
+                        } catch (e: Throwable) {}
 
                         if (MENU_TITLE == title) {
                             alreadyAdded = true
@@ -89,7 +89,7 @@ object GalleryMenuHook : BaseHook() {
 
             try {
                 XposedHelpers.findAndHookMethod(popupWindowClass, "setItemList", List::class.java, Boolean::class.javaPrimitiveType, setItemListHook)
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
 
             try {
                 XposedHelpers.findAndHookMethod(
@@ -141,19 +141,19 @@ object GalleryMenuHook : BaseHook() {
             val item = XposedHelpers.newInstance(itemClass, title, true)
             try {
                 XposedHelpers.callMethod(item, "setId", MENU_CUSTOM_ID)
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
             return item
-        } catch (_: Throwable) {}
+        } catch (e: Throwable) {}
 
         try {
             val item = XposedHelpers.newInstance(itemClass)
             XposedHelpers.callMethod(item, "setTitle", title)
             try {
                 XposedHelpers.callMethod(item, "setEnable", true)
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
             try {
                 XposedHelpers.callMethod(item, "setId", MENU_CUSTOM_ID)
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
             return item
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to create PopupListItem: $t")
@@ -204,11 +204,11 @@ object GalleryMenuHook : BaseHook() {
                     if (parent?.adapter != null) {
                         item = parent.adapter.getItem(position)
                     }
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
                 if (item == null && parent != null) {
                     try {
                         item = parent.getItemAtPosition(position)
-                    } catch (_: Throwable) {}
+                    } catch (e: Throwable) {}
                 }
 
                 if (item != null) {
@@ -224,7 +224,7 @@ object GalleryMenuHook : BaseHook() {
                             if (itemId != null && itemId == MENU_CUSTOM_ID) {
                                 isOurItem = true
                             }
-                        } catch (_: Throwable) {}
+                        } catch (e: Throwable) {}
                     }
                 }
             }
@@ -233,7 +233,7 @@ object GalleryMenuHook : BaseHook() {
                 XposedBridge.log("$TAG Intercepted 「$MENU_TITLE」 click at pos $position! Handling copy...")
                 try {
                     XposedHelpers.callMethod(window, "dismiss")
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
                 try {
                     PhotoDataExtractor.handleCopy(window)
                 } catch (t: Throwable) {
@@ -245,10 +245,10 @@ object GalleryMenuHook : BaseHook() {
             if (origSize != null && position >= origSize) {
                 try {
                     XposedHelpers.callMethod(window, "dismiss")
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
                 try {
                     PhotoDataExtractor.handleCopy(window)
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
                 return
             }
 

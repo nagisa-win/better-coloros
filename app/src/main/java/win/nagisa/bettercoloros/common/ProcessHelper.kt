@@ -23,7 +23,7 @@ object ProcessHelper {
                 os.flush()
                 val code = process.waitFor()
                 rootSuccess = (code == 0)
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
                 rootSuccess = false
             }
 

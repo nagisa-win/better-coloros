@@ -37,7 +37,7 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
                     "isModuleActive",
                     XC_MethodReplacement.returnConstant(true)
                 )
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
             return
         }
 

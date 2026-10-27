@@ -36,7 +36,7 @@ object ClipboardHelper {
             try {
                 try {
                     StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().build())
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
 
                 val imageUri = resolveImageUri(context, filePath, mediaId)
                 if (imageUri == null) {
@@ -74,7 +74,7 @@ object ClipboardHelper {
                     for (pkg in packages) {
                         try {
                             context.grantUriPermission(pkg, imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        } catch (_: Throwable) {}
+                        } catch (e: Throwable) {}
                     }
                 }
 
@@ -152,9 +152,9 @@ object ClipboardHelper {
                                 XposedBridge.log("$TAG Resolved FileProvider URI ($auth): $uri")
                                 return uri
                             }
-                        } catch (_: Throwable) {}
+                        } catch (e: Throwable) {}
                     }
-                } catch (_: Throwable) {}
+                } catch (e: Throwable) {}
 
                 return Uri.fromFile(file)
             }
@@ -169,7 +169,7 @@ object ClipboardHelper {
                 if (!type.isNullOrEmpty()) {
                     return type
                 }
-            } catch (_: Throwable) {}
+            } catch (e: Throwable) {}
         }
 
         if (filePath != null) {
