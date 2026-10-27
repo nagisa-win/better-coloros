@@ -1,0 +1,2 @@
+-keep class org.luckypray.dexkit.** { *; }
+-keep class win.nagisa.oppocameranormalization.** { *; }
