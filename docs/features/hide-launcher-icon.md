@@ -8,12 +8,24 @@
 
 ## 2. 技术方案与实现原理
 
-### 2.1 AndroidManifest 架构设计
+### 2.1 AndroidManifest 架构设计与 LSPosed 定位原理
 不能直接将主 Activity (`MainActivity`) 设置为 disabled，否则 LSPosed 模块管理器自身也会因为找不到可用 Activity 而无法通过模块详情打开设置。
 
-**标准解法**：采用 `activity-alias`（活动别名）架构：
-- 内部实体：`.ui.MainActivity`（保留 `action.MAIN`，不带 `category.LAUNCHER`）；
-- 桌面别名：`.ui.LauncherAlias`（指向 `MainActivity`，附带 `category.LAUNCHER`）。
+更关键的是：**LSPosed 模块管理器内部通过 `AppHelper.getSettingsIntent()` 定位模块设置入口**。其底层查找逻辑为：
+1. 优先查询携带 `android.intent.action.MAIN` 且带分类 `de.robv.android.xposed.category.MODULE_SETTINGS` 的 Activity；
+2. 若未匹配，回退查询 `android.intent.category.INFO`；
+3. 若仍未匹配，最后回退查询 `android.intent.category.LAUNCHER`。如果启动器别名被禁用且实体未声明前两者，LSPosed 将误判该模块“无设置界面”，从而**彻底移除齿轮图标与设置入口**！
+
+**成熟的标准解决方案**：
+- **实体 Activity** (`.ui.MainActivity`)：
+  - 声明 `android.intent.action.MAIN`
+  - 声明 `de.robv.android.xposed.category.MODULE_SETTINGS`（供 LSPosed 专属精准定位）
+  - 声明 `android.intent.category.INFO`（供系统级 Manager 通用回退定位）
+  - 不带 `category.LAUNCHER`（桌面启动器不展示实体）
+- **桌面别名** (`.ui.LauncherAlias`)：
+  - 指向 `MainActivity`
+  - 声明 `android.intent.action.MAIN` 与 `android.intent.category.LAUNCHER`
+  - 仅作为桌面桌面启动器检索的独立把手，开关关闭时仅把此别名置为 `COMPONENT_ENABLED_STATE_DISABLED`。
 
 ### 2.2 动态显隐控制 (`LauncherIconManager`)
 ```kotlin
