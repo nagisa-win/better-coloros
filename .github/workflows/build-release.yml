@@ -1,0 +1,116 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub Release with built APKs'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build APK & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew test --stacktrace
+
+      - name: Build with Gradle
+        run: ./gradlew assembleRelease assembleDebug --stacktrace
+
+      - name: Prepare APKs
+        run: |
+          mkdir -p dist
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            cp app/build/outputs/apk/release/app-release.apk dist/oppo-camera-normalization-release.apk
+          else
+            find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} dist/oppo-camera-normalization-release.apk \;
+          fi
+          if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp app/build/outputs/apk/debug/app-debug.apk dist/oppo-camera-normalization-debug.apk
+          else
+            find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/oppo-camera-normalization-debug.apk \;
+          fi
+          echo "Generated APKs in dist/:"
+          ls -la dist/
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: oppo-camera-normalization-apks
+          path: dist/*.apk
+          retention-days: 30
+
+      - name: Check Release Condition
+        id: check_release
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.inputs.create_release }}" == "true" ]]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "tag_name=v1.0.0" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish GitHub Release
+        if: steps.check_release.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.check_release.outputs.tag_name }}
+          name: Release ${{ steps.check_release.outputs.tag_name }}
+          files: dist/*.apk
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: true
+          body: |
+            ## 📸 OPPO 相机文件名规范化 (LSPosed)
+
+            将 OPPO / OnePlus 相机拍摄的照片与视频文件名从无下划线的形式（如 `IMG20261027171025.jpg` / `VID20261027171025.mp4`）自动规范化为 Android 行业标准带下划线格式（`IMG_20261027_171025.jpg` / `VID_20261027_171025.mp4`）。
+
+            ### 🌟 核心特性
+            - **多层纵深拦截架构**：
+              - DexKit 动态扫描：在 `com.oplus.camera` 私有与混淆方法内部直接拦截并改写文件名生成函数；
+              - 系统 MediaStore / ContentValues 拦截：规范化插入系统的 `_display_name`、`title` 与 `_data` 媒体库字段；
+              - 底层 File 与 FileOutputStream 拦截：确保存储介质上物理落盘的文件名也是标准的带下划线格式；
+              - MediaRecorder 拦截：规范化录像生成的 MP4 视频路径；
+              - SimpleDateFormat 模版适配。
+            - **业务完整性保证**：保留连拍（`_BURST01`）、封面图（`_COVER`）、HDR、慢动作等业务后缀与多种格式（`.jpg` / `.heic` / `.dng` / `.mp4`）。
+            - **幂等性保障**：已经是标准带下划线命名的文件不会被二次处理。
+            - **状态自检与测试**：内置图形化主界面，实时显示模块在 LSPosed 中的激活状态，并自带规则即时转换测试工具。
+
+            ### 📦 下载与安装
+            - **`oppo-camera-normalization-release.apk`**: 正式版安装包（已使用通用密钥签名，下载后可直接安装）
+            - **`oppo-camera-normalization-debug.apk`**: 调试版安装包

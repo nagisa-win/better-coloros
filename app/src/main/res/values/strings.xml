@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">OPPO 相机文件名规范化</string>
+    <string name="xposeddescription">将 OPPO/一加 相机拍摄的照片与视频文件名（IMGYYYYMMDDHHmmss / VIDYYYYMMDDHHmmss）自动重命名为带下划线的标准格式（IMG_YYYYMMDD_HHmmss / VID_YYYYMMDD_HHmmss）。</string>
+    <string name="module_status_active">LSPosed 模块已激活并运行中</string>
+    <string name="module_status_inactive">模块未激活，请在 LSPosed 管理器中启用并勾选「相机」</string>
+    <string name="desc_title">功能说明</string>
+    <string name="desc_detail">ColorOS / OPPO 原生相机在保存照片和视频时，默认命名缺少下划线分割（如 IMG20261027171025.jpg）。本模块通过在底层拦截并规范化文件名，使其统一符合 Android 标准命名格式（IMG_20261027_171025.jpg / VID_20261027_171025.mp4），完美适配各类网盘自动归档与第三方相册整理工具。</string>
+    <string name="test_title">规则即时测试</string>
+    <string name="test_hint">输入原文件名测试，如 IMG20261027171025.jpg</string>
+</resources>
