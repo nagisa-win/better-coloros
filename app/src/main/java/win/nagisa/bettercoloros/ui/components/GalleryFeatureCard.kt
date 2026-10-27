@@ -20,7 +20,6 @@ fun GalleryFeatureCard(modifier: Modifier = Modifier) {
         title = stringResource(R.string.feature_gallery_title),
         subtitle = stringResource(R.string.feature_gallery_subtitle),
         icon = Icons.Default.ContentCopy,
-        badgeText = stringResource(R.string.feature_gallery_badge),
         initiallyExpanded = true,
         modifier = modifier
     ) {

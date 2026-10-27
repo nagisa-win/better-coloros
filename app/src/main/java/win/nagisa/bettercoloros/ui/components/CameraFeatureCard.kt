@@ -27,7 +27,6 @@ fun CameraFeatureCard(modifier: Modifier = Modifier) {
         title = stringResource(R.string.feature_camera_title),
         subtitle = stringResource(R.string.feature_camera_subtitle),
         icon = Icons.Default.PhotoCamera,
-        badgeText = stringResource(R.string.feature_camera_badge),
         initiallyExpanded = true,
         modifier = modifier
     ) {
