@@ -1,9 +1,12 @@
-package win.nagisa.oppocameranormalization.util
+package win.nagisa.bettercoloros.common
 
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import org.luckypray.dexkit.DexKitBridge
 
+/**
+ * DexKit 动态 DEX 扫描管理器 (共享组件)
+ */
 object DexKitHelper {
     private var hostDir: String? = null
     private var bridgeInstance: DexKitBridge? = null
@@ -26,7 +29,7 @@ object DexKitHelper {
                 }
             } catch (t: Throwable) {
                 loadFailed = true
-                XposedBridge.log("[OppoCameraNormalization] Failed to initialize DexKit: ${t.message}")
+                XposedBridge.log("[BetterColorOS] Failed to initialize DexKit: ${t.message}")
                 null
             }
         }

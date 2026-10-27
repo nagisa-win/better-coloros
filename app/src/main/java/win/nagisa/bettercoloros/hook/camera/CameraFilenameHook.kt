@@ -1,4 +1,4 @@
-package win.nagisa.oppocameranormalization.hook
+package win.nagisa.bettercoloros.hook.camera
 
 import android.content.ContentValues
 import android.net.Uri
@@ -7,30 +7,26 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import win.nagisa.oppocameranormalization.util.DexKitHelper
-import win.nagisa.oppocameranormalization.util.FilenameNormalizer
+import win.nagisa.bettercoloros.common.DexKitHelper
+import win.nagisa.bettercoloros.common.FilenameNormalizer
+import win.nagisa.bettercoloros.hook.BaseHook
 import java.io.File
 import java.lang.reflect.Method
-import java.lang.reflect.Modifier
 import java.text.DateFormatSymbols
 import java.util.Locale
 
 /**
- * OPPO / OnePlus 相机核心文件名拦截器
- *
- * 采用多层纵深防御拦截架构：
- * 1. DexKit 动态扫描：在 com.oplus.camera 内部搜索生成/返回文件名的私有与混淆方法，直接在调用源头进行纠正
- * 2. ContentValues & MediaStore 拦截：拦截存入系统媒体库的 _display_name、title、_data 字段
- * 3. File & FileOutputStream 拦截：拦截直接向存储介质创建文件/目录时的路径
- * 4. MediaRecorder 拦截：拦截录像模块生成 MP4 视频的输出文件路径
- * 5. SimpleDateFormat 拦截：动态纠正内部时间格式模版
+ * 相机文件名规范化 Hook (五层纵深防御体系)
  */
 object CameraFilenameHook : BaseHook() {
 
-    private const val TAG = "[OppoCameraNormalization]"
+    private const val TAG = "[BetterColorOS][CameraRename]"
 
     override fun init(lpparam: XC_LoadPackage.LoadPackageParam) {
-        XposedBridge.log("$TAG Initializing hook for ${lpparam.packageName} (process: ${lpparam.processName})")
+        if (isInit) return
+        isInit = true
+
+        XposedBridge.log("$TAG Initializing for ${lpparam.packageName} (${lpparam.processName})")
 
         hookContentValues(lpparam)
         hookContentResolver(lpparam)
@@ -40,17 +36,10 @@ object CameraFilenameHook : BaseHook() {
         hookDexKitDynamicMethods(lpparam)
     }
 
-    /**
-     * 第一层：通过 DexKit 扫描目标 App 内部涉及时间戳与文件名前缀的核心方法
-     */
     private fun hookDexKitDynamicMethods(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
-            val bridge = DexKitHelper.bridge ?: run {
-                XposedBridge.log("$TAG DexKit bridge unavailable, skipping dynamic scan.")
-                return
-            }
-
-            val targetStrings = listOf("yyyyMMddHHmmss", "IMG", "VID")
+            val bridge = DexKitHelper.bridge ?: return
+            val targetStrings = listOf("yyyyMMddHHmmss", "IMG", "VID", "MOD")
             val candidateMethods = mutableSetOf<Method>()
 
             for (str in targetStrings) {
@@ -67,15 +56,12 @@ object CameraFilenameHook : BaseHook() {
                             if (methodInstance.returnType == String::class.java) {
                                 candidateMethods.add(methodInstance)
                             }
-                        } catch (_: Throwable) {
-                        }
+                        } catch (_: Throwable) {}
                     }
                 } catch (t: Throwable) {
-                    XposedBridge.log("$TAG DexKit findMethod error for string '$str': ${t.message}")
+                    XposedBridge.log("$TAG DexKit findMethod error for '$str': ${t.message}")
                 }
             }
-
-            XposedBridge.log("$TAG DexKit found ${candidateMethods.size} candidate String-returning methods.")
 
             for (method in candidateMethods) {
                 try {
@@ -91,19 +77,13 @@ object CameraFilenameHook : BaseHook() {
                             }
                         }
                     })
-                } catch (_: Throwable) {
-                }
+                } catch (_: Throwable) {}
             }
-
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Error during DexKit dynamic hooking: ${t.message}")
         }
     }
 
-    /**
-     * 第二层：拦截 ContentValues.put
-     * 当相机向系统 MediaStore 或内部 ContentProvider 插入照片/视频元数据时触发
-     */
     private fun hookContentValues(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
             val targetColumns = setOf(
@@ -135,15 +115,11 @@ object CameraFilenameHook : BaseHook() {
                     }
                 }
             )
-            XposedBridge.log("$TAG Hooked ContentValues.put successfully.")
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook ContentValues.put: ${t.message}")
         }
     }
 
-    /**
-     * 兜底媒体库插入：拦截 ContentResolver.insert
-     */
     private fun hookContentResolver(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
             val contentResolverClass = XposedHelpers.findClass("android.content.ContentResolver", lpparam.classLoader)
@@ -170,25 +146,21 @@ object CameraFilenameHook : BaseHook() {
                                 val normalized = FilenameNormalizer.normalize(original)
                                 if (normalized != null && normalized != original) {
                                     values.put(col, normalized)
-                                    XposedBridge.log("$TAG [ContentResolver.insert] column '$col': '$original' -> '$normalized'")
+                                    XposedBridge.log("$TAG [ContentResolver.insert] col '$col': '$original' -> '$normalized'")
                                 }
                             }
                         }
                     }
                 }
             )
-            XposedBridge.log("$TAG Hooked ContentResolver.insert successfully.")
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook ContentResolver.insert: ${t.message}")
         }
     }
 
-    /**
-     * 第三层：拦截直接的文件与文件流创建操作
-     */
     private fun hookFileOperations(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
-            // Hook File(String pathname)
+            // File(String)
             XposedHelpers.findAndHookConstructor(
                 File::class.java,
                 String::class.java,
@@ -206,7 +178,7 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            // Hook File(File parent, String child)
+            // File(File, String)
             XposedHelpers.findAndHookConstructor(
                 File::class.java,
                 File::class.java,
@@ -225,7 +197,7 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            // Hook File(String parent, String child)
+            // File(String, String)
             XposedHelpers.findAndHookConstructor(
                 File::class.java,
                 String::class.java,
@@ -244,10 +216,9 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            // Hook FileOutputStream(String name, boolean append)
-            val fosClass = java.io.FileOutputStream::class.java
+            // FileOutputStream(String, boolean)
             XposedHelpers.findAndHookConstructor(
-                fosClass,
+                java.io.FileOutputStream::class.java,
                 String::class.java,
                 Boolean::class.javaPrimitiveType,
                 object : XC_MethodHook() {
@@ -263,21 +234,14 @@ object CameraFilenameHook : BaseHook() {
                     }
                 }
             )
-
-            XposedBridge.log("$TAG Hooked File operations successfully.")
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook File operations: ${t.message}")
         }
     }
 
-    /**
-     * 第四层：拦截录像输出路径 (MediaRecorder.setOutputFile)
-     */
     private fun hookMediaRecorder(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
             val mrClass = android.media.MediaRecorder::class.java
-
-            // Hook setOutputFile(String path)
             try {
                 XposedHelpers.findAndHookMethod(
                     mrClass,
@@ -296,10 +260,8 @@ object CameraFilenameHook : BaseHook() {
                         }
                     }
                 )
-            } catch (_: Throwable) {
-            }
+            } catch (_: Throwable) {}
 
-            // Hook setOutputFile(File file)
             try {
                 XposedHelpers.findAndHookMethod(
                     mrClass,
@@ -319,23 +281,16 @@ object CameraFilenameHook : BaseHook() {
                         }
                     }
                 )
-            } catch (_: Throwable) {
-            }
-
-            XposedBridge.log("$TAG Hooked MediaRecorder successfully.")
+            } catch (_: Throwable) {}
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Failed to hook MediaRecorder: ${t.message}")
         }
     }
 
-    /**
-     * 第五层：拦截时间格式化模版
-     */
     private fun hookDateFormat(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
             val sdfClass = java.text.SimpleDateFormat::class.java
 
-            // 拦截 SimpleDateFormat(String pattern)
             XposedHelpers.findAndHookConstructor(
                 sdfClass,
                 String::class.java,
@@ -351,7 +306,6 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            // 拦截 SimpleDateFormat(String pattern, Locale locale)
             XposedHelpers.findAndHookConstructor(
                 sdfClass,
                 String::class.java,
@@ -368,7 +322,6 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            // 拦截 SimpleDateFormat(String pattern, DateFormatSymbols formatSymbols)
             XposedHelpers.findAndHookConstructor(
                 sdfClass,
                 String::class.java,
@@ -385,11 +338,10 @@ object CameraFilenameHook : BaseHook() {
                 }
             )
 
-            // 拦截 Resources.getText(int) 与 Resources.getString(int)
-            val resClass = android.content.res.Resources::class.java
+            // Resources.getText
             try {
                 XposedHelpers.findAndHookMethod(
-                    resClass,
+                    android.content.res.Resources::class.java,
                     "getText",
                     Int::class.javaPrimitiveType,
                     object : XC_MethodHook() {
@@ -404,12 +356,9 @@ object CameraFilenameHook : BaseHook() {
                         }
                     }
                 )
-            } catch (_: Throwable) {
-            }
-
-            XposedBridge.log("$TAG Hooked SimpleDateFormat constructors and Resources successfully.")
+            } catch (_: Throwable) {}
         } catch (t: Throwable) {
-            XposedBridge.log("$TAG Failed to hook SimpleDateFormat: ${t.message}")
+            XposedBridge.log("$TAG Failed to hook SimpleDateFormat/Resources: ${t.message}")
         }
     }
 

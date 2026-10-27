@@ -1,8 +1,8 @@
-package win.nagisa.oppocameranormalization.hook
+package win.nagisa.bettercoloros.hook
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 abstract class BaseHook {
-    var isInit = false
+    var isInit: Boolean = false
     abstract fun init(lpparam: XC_LoadPackage.LoadPackageParam)
 }

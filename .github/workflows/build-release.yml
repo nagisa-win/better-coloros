@@ -52,14 +52,14 @@ jobs:
         run: |
           mkdir -p dist
           if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            cp app/build/outputs/apk/release/app-release.apk dist/oppo-camera-normalization-release.apk
+            cp app/build/outputs/apk/release/app-release.apk dist/better-coloros-release.apk
           else
-            find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} dist/oppo-camera-normalization-release.apk \;
+            find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} dist/better-coloros-release.apk \;
           fi
           if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-            cp app/build/outputs/apk/debug/app-debug.apk dist/oppo-camera-normalization-debug.apk
+            cp app/build/outputs/apk/debug/app-debug.apk dist/better-coloros-debug.apk
           else
-            find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/oppo-camera-normalization-debug.apk \;
+            find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/better-coloros-debug.apk \;
           fi
           echo "Generated APKs in dist/:"
           ls -la dist/
@@ -67,7 +67,7 @@ jobs:
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: oppo-camera-normalization-apks
+          name: better-coloros-apks
           path: dist/*.apk
           retention-days: 30
 
@@ -96,21 +96,16 @@ jobs:
           make_latest: true
           generate_release_notes: true
           body: |
-            ## 📸 OPPO 相机文件名规范化 (LSPosed)
+            ## 🌟 Better ColorOS 体验增强工具箱发布
 
-            将 OPPO / OnePlus 相机拍摄的照片与视频文件名从无下划线的形式（如 `IMG20261027171025.jpg` / `VID20261027171025.mp4`）自动规范化为 Android 行业标准带下划线格式（`IMG_20261027_171025.jpg` / `VID_20261027_171025.mp4`）。
+            专为 OPPO / 一加 (ColorOS) 打造的 LSPosed 系统级优化套件。
 
-            ### 🌟 核心特性
-            - **多层纵深拦截架构**：
-              - DexKit 动态扫描：在 `com.oplus.camera` 私有与混淆方法内部直接拦截并改写文件名生成函数；
-              - 系统 MediaStore / ContentValues 拦截：规范化插入系统的 `_display_name`、`title` 与 `_data` 媒体库字段；
-              - 底层 File 与 FileOutputStream 拦截：确保存储介质上物理落盘的文件名也是标准的带下划线格式；
-              - MediaRecorder 拦截：规范化录像生成的 MP4 视频路径；
-              - SimpleDateFormat 模版适配。
-            - **业务完整性保证**：保留连拍（`_BURST01`）、封面图（`_COVER`）、HDR、慢动作等业务后缀与多种格式（`.jpg` / `.heic` / `.dng` / `.mp4`）。
-            - **幂等性保障**：已经是标准带下划线命名的文件不会被二次处理。
-            - **状态自检与测试**：内置图形化主界面，实时显示模块在 LSPosed 中的激活状态，并自带规则即时转换测试工具。
+            ### ✨ 核心功能
+            - **📷 相机文件名规范化**：自动将拍摄的照片与视频命名从缺少下划线的紧凑格式（`IMGYYYYMMDDHHmmss` / `VID...`）修正为 Android 行业标准带下划线格式（`IMG_YYYYMMDD_HHmmss` / `VID_...` / `MOD_...`），完整保留连拍与实况封面后缀。
+            - **🖼️ 系统相册复制到剪贴板**：在系统相册右上角「更多」菜单中动态注入「复制到剪贴板」选项，使用原生 MediaStore URI 进行纯图片复制，方便跨端（KDE Connect / 微信 / QQ）一键 Ctrl+V / ⌘+V 粘贴。
+            - **🎨 现代 Material You 界面**：全盘采用 Material Design 3 设计语言与 Monet 动态壁纸取色，完美适配直板手机、折叠屏及平板电脑（响应式双列豆腐块并排）。
+            - **👁️ 桌面图标自由隐藏**：支持从设置中直接隐藏桌面图标，隐藏后依然支持随时从 LSPosed 管理器中重新打开。
 
-            ### 📦 下载与安装
-            - **`oppo-camera-normalization-release.apk`**: 正式版安装包（已使用通用密钥签名，下载后可直接安装）
-            - **`oppo-camera-normalization-debug.apk`**: 调试版安装包
+            ### 📦 文件下载
+            - **`better-coloros-release.apk`**: 正式版安装包（已使用内置通用密钥签名，下载后可直接安装）
+            - **`better-coloros-debug.apk`**: 调试版安装包

@@ -1,4 +1,4 @@
-package win.nagisa.oppocameranormalization
+package win.nagisa.bettercoloros
 
 import com.github.kyuubiran.ezxhelper.EzXHelper
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -7,26 +7,28 @@ import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import win.nagisa.oppocameranormalization.hook.CameraFilenameHook
-import win.nagisa.oppocameranormalization.util.DexKitHelper
+import win.nagisa.bettercoloros.common.DexKitHelper
+import win.nagisa.bettercoloros.hook.camera.CameraFilenameHook
+import win.nagisa.bettercoloros.hook.gallery.GalleryMenuHook
 
 class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     companion object {
-        const val TAG = "OppoCameraNormalization"
-        const val MODULE_PACKAGE = "win.nagisa.oppocameranormalization"
-        val TARGET_PACKAGES = setOf(
-            "com.oplus.camera",
-            "com.coloros.gallery3d"
-        )
+        const val TAG = "BetterColorOS"
+        const val MODULE_PACKAGE = "win.nagisa.bettercoloros"
+
+        const val PKG_CAMERA = "com.oplus.camera"
+        const val PKG_GALLERY = "com.coloros.gallery3d"
+
+        val TARGET_PACKAGES = setOf(PKG_CAMERA, PKG_GALLERY)
     }
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
-        // Zygote 初始化阶段
+        // Zygote 阶段
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        // 自检：在模块自身界面中标记为已激活
+        // 模块自身自检
         if (lpparam.packageName == MODULE_PACKAGE) {
             try {
                 XposedHelpers.findAndHookMethod(
@@ -35,12 +37,11 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
                     "isModuleActive",
                     XC_MethodReplacement.returnConstant(true)
                 )
-            } catch (_: Throwable) {
-            }
+            } catch (_: Throwable) {}
             return
         }
 
-        // 目标 App 注入
+        // 目标应用注入
         if (lpparam.packageName in TARGET_PACKAGES) {
             try {
                 if (lpparam.isFirstApplication) {
@@ -50,13 +51,21 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
                     DexKitHelper.init(lpparam)
                 }
 
-                XposedBridge.log("[$TAG] Activated for package: ${lpparam.packageName} (process: ${lpparam.processName})")
+                XposedBridge.log("[$TAG] Activated in ${lpparam.packageName} (${lpparam.processName})")
 
-                // 初始化相机文件名拦截器
-                CameraFilenameHook.init(lpparam)
+                when (lpparam.packageName) {
+                    PKG_CAMERA -> {
+                        CameraFilenameHook.init(lpparam)
+                    }
+                    PKG_GALLERY -> {
+                        GalleryMenuHook.init(lpparam)
+                        // 相册也同时加载文件名规范化，确保在相册内另存/编辑时保持一致格式
+                        CameraFilenameHook.init(lpparam)
+                    }
+                }
 
             } catch (t: Throwable) {
-                XposedBridge.log("[$TAG] Error initializing module for ${lpparam.packageName}: ${t.message}")
+                XposedBridge.log("[$TAG] Error initializing in ${lpparam.packageName}: ${t.message}")
                 t.printStackTrace()
             }
         }
