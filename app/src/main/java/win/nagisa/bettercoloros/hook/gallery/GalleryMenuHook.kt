@@ -232,22 +232,22 @@ object GalleryMenuHook : BaseHook() {
             if (isOurItem) {
                 XposedBridge.log("$TAG Intercepted 「$MENU_TITLE」 click at pos $position! Handling copy...")
                 try {
-                    XposedHelpers.callMethod(window, "dismiss")
-                } catch (e: Throwable) {}
-                try {
                     PhotoDataExtractor.handleCopy(window)
                 } catch (t: Throwable) {
                     XposedBridge.log("$TAG handleCopy error: $t")
                 }
+                try {
+                    XposedHelpers.callMethod(window, "dismiss")
+                } catch (e: Throwable) {}
                 return
             }
 
             if (origSize != null && position >= origSize) {
                 try {
-                    XposedHelpers.callMethod(window, "dismiss")
+                    PhotoDataExtractor.handleCopy(window)
                 } catch (e: Throwable) {}
                 try {
-                    PhotoDataExtractor.handleCopy(window)
+                    XposedHelpers.callMethod(window, "dismiss")
                 } catch (e: Throwable) {}
                 return
             }
