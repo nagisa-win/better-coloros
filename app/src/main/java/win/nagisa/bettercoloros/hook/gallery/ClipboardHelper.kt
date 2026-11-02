@@ -6,7 +6,6 @@ import android.content.ClipboardManager
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
-import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
@@ -28,30 +27,15 @@ import java.lang.reflect.Method
  *    宿主自身即为 Provider 拥有者，彻底解决 Android 14/15/16/17 (ColorOS 15+)
  *    系统在 ClipboardService.setPrimaryClip 时因 checkUriOwner 抛出的
  *    "SecurityException: UID does not have permission to content://media/..." 权限拒绝问题。
- * 2. 同时保留 MediaStore URI 双向回退兜底，确保对低版本 ColorOS (Android 10~13) 的无缝兼容。
- * 3. 预先向系统输入法（微信键盘、百度、搜狗、Gboard）、微信、QQ、LocalSend、KDE Connect 等
- *    常用粘贴端授予临时读权限。
+ * 2. 依托 Android 系统的标准剪贴板权限委托体系：
+ *    相册自身的 GalleryFileProvider 声明了 android:grantUriPermissions="true"，
+ *    当 setPrimaryClip 成功后，系统服务 ClipboardService (mPermissionOwner) 会在任意
+ *    消费方（输入法预览条、微信、QQ、便签等）读取剪贴板时自动、动态派发临时只读授权，
+ *    无需也不应硬编码维护任何第三方包名白名单。
+ * 3. 保留 MediaStore URI 双向回退兜底，确保对低版本 ColorOS (Android 10~13) 的无缝兼容。
  */
 object ClipboardHelper {
     private const val TAG = "[BetterColorOS][GalleryCopy] "
-
-    // 主流粘贴目标包名白名单（支持预先授权 URI 读取权限）
-    private val PRE_GRANT_PACKAGES = arrayOf(
-        "com.android.systemui",                      // 系统剪贴板弹窗/浮窗
-        "com.google.android.inputmethod.latin",      // Gboard
-        "com.baidu.input_oppo",                      // 百度输入法定制版
-        "com.sohu.inputmethod.sogou.oppo",           // 搜狗输入法定制版
-        "com.tencent.wetype",                        // 微信键盘
-        "com.tencent.mm",                            // 微信
-        "com.tencent.mobileqq",                      // QQ
-        "org.kde.kdeconnect_tp",                     // KDE Connect
-        "com.localsend.localsend_app",               // LocalSend
-        "com.coloros.note",                          // ColorOS 便签
-        "com.oplus.note",                            // OPPO 便签
-        "com.feishu.mobile",                         // 飞书
-        "com.ss.android.lark",                       // Lark
-        "com.alibaba.android.rimet"                  // 钉钉
-    )
 
     fun copyImageToClipboard(context: Context?, rawFilePath: String?, rawMediaId: Long) {
         if (context == null) {
@@ -117,9 +101,6 @@ object ClipboardHelper {
 
                 XposedBridge.log("$TAG Setting clipboard image: primaryUri=$primaryUri, backupUri=$backupUri, mime=$mimeType, path=$filePath")
 
-                // 预先授权
-                grantPermissionsToPackages(context, primaryUri)
-
                 val description = ClipDescription("Image", arrayOf(mimeType, "image/*"))
                 val clipData = ClipData(description, ClipData.Item(primaryUri))
 
@@ -131,7 +112,6 @@ object ClipboardHelper {
                     // 若首选 URI 被系统安全校验拦截（如旧系统或定制 ROM 对某些 Provider 校验不同），自动回退重试备用 URI
                     XposedBridge.log("$TAG SecurityException setting primaryClip: ${secEx.message}, trying backupUri=$backupUri")
                     if (backupUri != null && backupUri != primaryUri) {
-                        grantPermissionsToPackages(context, backupUri)
                         val fallbackClip = ClipData(description, ClipData.Item(backupUri))
                         cm.setPrimaryClip(fallbackClip)
                         Toast.makeText(context, "图片已复制到剪贴板", Toast.LENGTH_SHORT).show()
@@ -187,15 +167,6 @@ object ClipboardHelper {
             }
         }
         return null
-    }
-
-    private fun grantPermissionsToPackages(context: Context, uri: Uri) {
-        if (ContentResolver.SCHEME_CONTENT != uri.scheme) return
-        for (pkg in PRE_GRANT_PACKAGES) {
-            try {
-                context.grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } catch (e: Throwable) {}
-        }
     }
 
     private fun queryMediaIdByPath(context: Context, filePath: String): Long {

@@ -76,3 +76,12 @@ git diff --cached
   2. 运行所有单元测试（`FilenameNormalizerTest` 等）；
   3. 编译 Debug 与 Release 两版 APK 并自动签名；
   4. 自动上传产物并在打 Tag 时发布 GitHub Release。
+
+---
+
+## 5. 版本号递增规则 (Semantic Versioning)
+
+在升级版本时，同步维护 `app/build.gradle.kts` 中的 `versionName` 与 `versionCode`，并推导打出 Git Tag：
+- **小更新 (Patch)**：更改第三位版本号（如 `1.0.0` -> `1.0.1`），适用于 Bug 修复、向下兼容的细节优化。
+- **大更新（向下兼容，Minor）**：更改第二位版本号（如 `1.0.1` -> `1.1.0`），适用于向下兼容的 API、特性重构或功能升级。
+- **破坏性的大更新 (Major)**：更改第一位大版本号（如 `1.1.0` -> `2.0.0`），适用于破坏性变更或底层重大变动。

@@ -56,9 +56,11 @@
   - **优先生成 FileProvider URI**：当本地图片文件存在时，通过 `GalleryFileProvider` / `FileProvider.getUriForFile` 生成 URI；
   - **降级支持 MediaStore URI**：在旧版 ColorOS 或无法获取文件物理路径时，使用 `ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaId)` 兜底；
   - **调用容错重试**：`setPrimaryClip` 发生 `SecurityException` 时，自动尝试另一种 URI，确保平滑过渡。
-- **预授权名单**：
-  - 自动向系统剪贴板浮窗（`com.android.systemui`）、系统主流输入法（百度、搜狗、Gboard、微信键盘 `com.tencent.wetype`）、社交应用（微信、QQ、飞书、钉钉）、便签笔记（`com.coloros.note`、`com.oplus.note`）、跨端同步应用（KDE Connect、LocalSend）预授权读权限（`FLAG_GRANT_READ_URI_PERMISSION`）；
-  - 临时放宽 `StrictMode.VmPolicy` 限制，确保各类粘贴端均可无缝读取流数据。
+- **剪贴板托管授权体系**：
+  - **依托系统级剪贴板授权流转**：相册自身的 `GalleryFileProvider` 在 Manifest 中明确声明了 `android:grantUriPermissions="true"`；
+  - 当 `setPrimaryClip` 成功后，`system_server` 的 `ClipboardService`（`mPermissionOwner`）在任何消费方应用（系统剪贴板浮窗、各类输入法预览条、微信、QQ、系统便签、协同工具等）读取剪贴板时，由系统自动完成动态临时只读授权；
+  - 彻底拒绝维护任何脆弱、易漏的硬编码应用白名单，天然无缝兼容分身双开、工作资料库应用、平板/折叠屏协同以及任意第三方应用；
+  - 放宽 `StrictMode.VmPolicy` 限制，确保各类粘贴端均可无缝读取流数据。
 
 ---
 
